@@ -2,18 +2,21 @@ import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
 
 //Predefined constants for timetable extraction
+const room_prefix = "B"
 const master_serial = { key: "Short", val: "Name" }
 const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
 const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
 const cell_size = { w: 76, h: 48 }
 const cell_offsets = {
   sc: [-0.5, 0.5, -0.5, 0.5],
+  st: [-0.5, 0.5, -0.5, 0],
+  sb: [-0.5, 0.5, 0, 0.5],
   dc: [-0.5, 1.5, -0.5, 0.5],
   dt: [-0.5, 1.5, -0.5, 0],
   db: [-0.5, 1.5, 0, 0.5],
 }
 
-export type TableCell = { prof: string, course: string, room: string, group: string | undefined, is_double: boolean }
+export type TableCell = { prof: string, course: string, room: string | undefined, group: string | undefined, is_double: boolean }
 export type Days = (typeof y_serial)[number]
 export type Periods = (typeof x_serial)[number]
 export type WeeklySchedule<T> = Partial<{ [K in Days]: Partial<{ [P in Periods]: T }> }>;
@@ -44,8 +47,9 @@ export class Timetable {
       const it = items.find((val) => val.str.trim() == i)!
       anchor_map[it.str] = itemXY(it)
     }
-    const cells: WeeklySchedule<TableCell> = {}
+
     // extract the actual schedule table
+    const cells: WeeklySchedule<TableCell> = {}
     for (let row of y_serial) {
       cells[row] = {}
       for (let col of x_serial) {
@@ -75,15 +79,25 @@ export class Timetable {
               iy <= y + cell_size.h * offset[3]
             )
           })
+
+          //TODO extract cell data based on positioning instead of only relying on string format
+
+          
           //there maybe more than 1 match of cell type but idk , we'll see
-          let vals = its.map(v => v.str).sort((v1, v2) => v1.length - v2.length)
+          let vals = its.map(v => v.str).sort((v1, v2) => v1.split(" ")[0].replace(/[^a-zA-Z0-9]/g, '').length - v2.split(" ")[0].replace(/[^a-zA-Z0-9]/g, '').length)
           let gi = vals.findIndex(v => v.includes('Group'))
+          // console.log(vals.toString())
           let group = gi != -1 ? vals[gi] : undefined
-          if (gi != -1) vals.splice(gi, 1)
+          // if (gi != -1) vals.splice(gi, 1)
+          if (vals[1] == "JY") console.log(vals)
+          let ri = vals.findIndex(v => /\d/.test(v))
+          let room = ri != -1 ? vals[ri] : undefined
+          if(room=="Group 2") console.log(its)
+          // if (ri != -1) vals.splice(ri, 1)
           let cell = {
             prof: vals[0],
-            room: vals[1],
-            course: vals[2],
+            room: room,
+            course: vals[1],
             group: group,
             is_double: is_double
           }
@@ -110,8 +124,20 @@ export class Timetable {
       const nx = anchor[1].transform[4], ny = anchor[1].transform[5]
       const keys = items.filter(v => v.str.trim() != "" && v.transform[5] < sy && Math.abs(v.transform[4] - sx) < 5)
       const vals = items.filter(v => v.str.trim() != "" && v.transform[5] < ny && Math.abs(v.transform[4] - nx) < 5)
+
+      let valIndex = 0
       masters[i] = Object.fromEntries(
-        keys.map((key, index) => [key.str, vals[index].str])
+        keys.map((key, index) => {
+          let keyStr = key.str
+          let valStr = vals[valIndex].str
+          if (keyStr.includes(" ") && key.transform[5] != vals[valIndex].transform[5]) {
+            keyStr = keyStr.split(" ")[0]
+            valStr = keyStr.split(" ").slice(1).join(" ")
+          } else {
+            valIndex++
+          }
+          return [keyStr, valStr]
+        })
       );
     }
     return new Timetable(items[0].str, cells, masters[0], masters[1])

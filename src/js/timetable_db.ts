@@ -43,7 +43,8 @@ export class TimetableDB {
     for (const timetable of Object.values(this.timetables)) {
       for (const day of Object.values(timetable.schedule)) {
         for (const cell of Object.values(day)) {
-          allRooms.add(cell.room)
+          if (cell.room) allRooms.add(cell.room)
+
         }
       }
     }

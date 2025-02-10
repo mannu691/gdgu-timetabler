@@ -20,10 +20,12 @@ reader.onload = onPdfFileLoad
 const test = async () => {
   const task = getDocument('http://localhost:5173/test.pdf')
   const res = await task.promise
-  const page = await res.getPage(1)
   const db = new TimetableDB()
-  const timetable = await Timetable.fromPDFPage(page)
-  console.log(timetable)
+  const timetables = await Timetable.fromPDF(res)
+  db.addTimetables(timetables)
+  console.log(timetables)
+  db.rebuildData()
+
 }
 test()
 </script>

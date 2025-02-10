@@ -1,14 +1,10 @@
-import type { PDFPageProxy } from "pdfjs-dist"
+import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
 
+//Predefined constants for timetable extraction
 const master_serial = { key: "Short", val: "Name" }
 const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
 const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
-type TableCell = { prof: string, course: string, room: string, group: string | undefined, is_double: boolean }
-type Days = (typeof y_serial)[number]
-type Periods = (typeof x_serial)[number]
-type WeeklySchedule = Partial<{ [K in Days]: Partial<{ [P in Periods]: TableCell }> }>;
-
 const cell_size = { w: 76, h: 48 }
 const cell_offsets = {
   sc: [-0.5, 0.5, -0.5, 0.5],
@@ -17,22 +13,27 @@ const cell_offsets = {
   db: [-0.5, 1.5, 0, 0.5],
 }
 
+export type TableCell = { prof: string, course: string, room: string, group: string | undefined, is_double: boolean }
+export type Days = (typeof y_serial)[number]
+export type Periods = (typeof x_serial)[number]
+export type WeeklySchedule<T> = Partial<{ [K in Days]: Partial<{ [P in Periods]: T }> }>;
+
 function itemXY(it: TextItem): [number, number] {
   return [it.transform[4] + it.width * 0.5, it.transform[5] + it.height * 0.5]
 }
 
 export class Timetable {
   batch: string
-  data: WeeklySchedule
+  schedule: WeeklySchedule<TableCell>
   courses: { [key: string]: string }
   professors: { [key: string]: string }
-  constructor(batch: string, data: WeeklySchedule, courses: { [key: string]: string }, professors: { [key: string]: string }) {
+  constructor(batch: string, data: WeeklySchedule<TableCell>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
     this.batch = batch
-    this.data = data
+    this.schedule = data
     this.professors = professors
     this.courses = courses
   }
-  static async fromPDF(page: PDFPageProxy): Promise<Timetable | undefined> {
+  static async fromPDFPage(page: PDFPageProxy): Promise<Timetable | undefined> {
     const items = (await page.getTextContent()).items as TextItem[]
     // skip timetable with different structure
     if (items[0].str.includes("G D Goenka University")) return undefined
@@ -43,7 +44,7 @@ export class Timetable {
       const it = items.find((val) => val.str.trim() == i)!
       anchor_map[it.str] = itemXY(it)
     }
-    const cells: WeeklySchedule = {}
+    const cells: WeeklySchedule<TableCell> = {}
     // extract the actual schedule table
     for (let row of y_serial) {
       cells[row] = {}
@@ -114,6 +115,23 @@ export class Timetable {
       );
     }
     return new Timetable(items[0].str, cells, masters[0], masters[1])
+  }
+
+  static async fromPDF(pdf: PDFDocumentProxy): Promise<Timetable[]> {
+    const list: Timetable[] = []
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i)
+      const timetable = await Timetable.fromPDFPage(page)
+      if (timetable) list.push(timetable)
+    }
+    return list
+  }
+
+  static fromJSON(json: any): Timetable {
+    return new Timetable(json.batch, json.data, json.courses, json.professors)
+  }
+  toJSON(): string {
+    return JSON.stringify({ batch: this.batch, data: this.schedule, courses: this.courses, professors: this.professors })
   }
 }
 

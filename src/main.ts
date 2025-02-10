@@ -8,6 +8,7 @@ import router from './router'
 import { GlobalWorkerOptions } from 'pdfjs-dist'
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs'
+
 const app = createApp(App)
 
 app.use(router)
@@ -16,5 +17,4 @@ app.use(PrimeVue, {
     preset: Aura,
   },
 })
-
 app.mount('#app')

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts" lang="ts">
 import { Timetable } from '@/js/timetable'
 import { TimetableDB } from '@/js/timetable_db'
 import { getDocument } from 'pdfjs-dist'
@@ -26,6 +26,7 @@ const test = async () => {
   db.addTimetables(timetables)
   db.rebuildData()
   db.save()
+  console.log(db.availableRooms)
 }
 test()
 </script>
@@ -34,4 +35,4 @@ test()
   <main>
     <input @input="onTimetableInput" type="file" name="timetable-pdf" id="timetable-pdf" />
   </main>
-</template>
+</template> -->

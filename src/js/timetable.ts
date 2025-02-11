@@ -2,11 +2,10 @@ import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
 
 //Predefined constants for timetable extraction
-const room_prefix = "B"
 const master_serial = { key: "Short", val: "Name" }
-const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
-const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
-const cell_size = { w: 76, h: 48 }
+export const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
+export const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
+const cell_size = { w: 76, h: 46 }
 const cell_offsets = {
   sc: [-0.5, 0.5, -0.5, 0.5],
   st: [-0.5, 0.5, -0.5, 0],
@@ -16,7 +15,7 @@ const cell_offsets = {
   db: [-0.5, 1.5, 0, 0.5],
 }
 
-export type TableCell = { prof: string, course: string, room: string | undefined, group: string | undefined, is_double: boolean }
+export type TableCell = { prof: string | undefined, course: string, room: string | undefined, group: string | undefined, is_double: boolean }
 export type Days = (typeof y_serial)[number]
 export type Periods = (typeof x_serial)[number]
 export type WeeklySchedule<T> = Partial<{ [K in Days]: Partial<{ [P in Periods]: T }> }>;
@@ -43,33 +42,31 @@ export class Timetable {
     const anchor_map: { [key: string]: [number, number] } = {}
 
     // map all positions of serial anchors
-    for (let i of [...x_serial, ...y_serial]) {
+    for (const i of [...x_serial, ...y_serial]) {
       const it = items.find((val) => val.str.trim() == i)!
       anchor_map[it.str] = itemXY(it)
     }
 
     // extract the actual schedule table
     const cells: WeeklySchedule<TableCell> = {}
-    for (let row of y_serial) {
+    for (const row of y_serial) {
       cells[row] = {}
-      for (let col of x_serial) {
+      for (const col of x_serial) {
         if (cells[row][col] != undefined) continue
-        let x = anchor_map[col][0],
+        const x = anchor_map[col][0],
           y = anchor_map[row][1]
         let is_double = false
         for (const [cf, offset] of Object.entries(cell_offsets)) {
-          if (
-            items.find((v) => {
-              const [ix, iy] = itemXY(v)
-              return (
-                Math.abs(ix - (x + cell_size.w * (offset[0] + offset[1]) * 0.5)) < 6 &&
-                Math.abs(iy - (y + cell_size.h * (offset[2] + offset[3]) * 0.5)) < 6
-              )
-            }) == undefined
-          )
-            continue
+          const course = items.find((v) => {
+            const [ix, iy] = itemXY(v)
+            return (
+              Math.abs(ix - (x + cell_size.w * (offset[0] + offset[1]) * 0.5)) < 2 &&
+              Math.abs(iy - (y + cell_size.h * (offset[2] + offset[3]) * 0.5)) < 2
+            )
+          })
+          if (course == undefined) continue
           if (cf.includes('d')) is_double = true
-          let its = items.filter((v) => {
+          const its = items.filter((v) => {
             const [ix, iy] = itemXY(v)
             return (
               v.str.trim() != '' &&
@@ -81,23 +78,21 @@ export class Timetable {
           })
 
           //TODO extract cell data based on positioning instead of only relying on string format
-
-          
-          //there maybe more than 1 match of cell type but idk , we'll see
-          let vals = its.map(v => v.str).sort((v1, v2) => v1.split(" ")[0].replace(/[^a-zA-Z0-9]/g, '').length - v2.split(" ")[0].replace(/[^a-zA-Z0-9]/g, '').length)
-          let gi = vals.findIndex(v => v.includes('Group'))
-          // console.log(vals.toString())
-          let group = gi != -1 ? vals[gi] : undefined
-          // if (gi != -1) vals.splice(gi, 1)
-          if (vals[1] == "JY") console.log(vals)
-          let ri = vals.findIndex(v => /\d/.test(v))
-          let room = ri != -1 ? vals[ri] : undefined
-          if(room=="Group 2") console.log(its)
-          // if (ri != -1) vals.splice(ri, 1)
-          let cell = {
-            prof: vals[0],
+          const vals = its.sort((v1, v2) => v1.transform[4] - v2.transform[4])
+          const used: number[] = [vals.findIndex(v => v.str == course.str)]
+          const gi = vals.findIndex((v, i) => !used.includes(i) && v.str.includes('Group'))
+          used.push(gi)
+          const ri = vals.findIndex((v, i) => !used.includes(i) && /\d/.test(v.str))
+          used.push(ri)
+          const pi = vals.findIndex((v, i) => !used.includes(i))
+          used.push(pi)
+          const prof = pi == -1 ? undefined : vals[pi].str
+          const room = ri == -1 ? undefined : vals[ri].str
+          const group = gi == -1 ? undefined : vals[gi].str
+          const cell = {
+            prof: prof,
             room: room,
-            course: vals[1],
+            course: course.str,
             group: group,
             is_double: is_double
           }
@@ -108,16 +103,16 @@ export class Timetable {
     }
 
     // get pair of Short and Name anchors
-    let key_anchors = items.filter(v => v.str.trim() == master_serial.key)
-    let master_anchors = []
-    for (let i of key_anchors) {
-      let x = i.transform[4], y = i.transform[5]
-      let closestVal = items.filter(v => v.str.trim() == master_serial.val)
+    const key_anchors = items.filter(v => v.str.trim() == master_serial.key)
+    const master_anchors = []
+    for (const i of key_anchors) {
+      const x = i.transform[4], y = i.transform[5]
+      const closestVal = items.filter(v => v.str.trim() == master_serial.val)
         .reduce((prev, cur) => (Math.abs(prev.transform[4] - x) + Math.abs(prev.transform[5] - y)) < Math.abs(cur.transform[4] - x) + Math.abs(cur.transform[5] - y) ? prev : cur)
       master_anchors.push([i, closestVal])
     }
     //extract course and professor details
-    let masters = []
+    const masters = []
     for (let i = 0; i < 2; i++) {
       const anchor = master_anchors[i]
       const sx = anchor[0].transform[4], sy = anchor[0].transform[5]
@@ -127,7 +122,7 @@ export class Timetable {
 
       let valIndex = 0
       masters[i] = Object.fromEntries(
-        keys.map((key, index) => {
+        keys.map((key) => {
           let keyStr = key.str
           let valStr = vals[valIndex].str
           if (keyStr.includes(" ") && key.transform[5] != vals[valIndex].transform[5]) {
@@ -153,11 +148,9 @@ export class Timetable {
     return list
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static fromJSON(json: any): Timetable {
     return new Timetable(json.batch, json.data, json.courses, json.professors)
-  }
-  toJSON(): string {
-    return JSON.stringify({ batch: this.batch, data: this.schedule, courses: this.courses, professors: this.professors })
   }
 }
 

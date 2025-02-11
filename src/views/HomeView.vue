@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Timetable } from '@/js/timetable'
 import { TimetableDB } from '@/js/timetable_db'
 import { getDocument } from 'pdfjs-dist'
@@ -21,11 +21,11 @@ const test = async () => {
   const task = getDocument('http://localhost:5173/test.pdf')
   const res = await task.promise
   const db = new TimetableDB()
+  db.delete()
   const timetables = await Timetable.fromPDF(res)
   db.addTimetables(timetables)
-  console.log(timetables)
   db.rebuildData()
-
+  db.save()
 }
 test()
 </script>

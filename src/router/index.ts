@@ -10,8 +10,8 @@ const router = createRouter({
           children: [
               {
                   path: '/',
-                  name: 'dashboard',
-                  component: () => import('@/views/Dashboard.vue')
+                  name: 'findavailableroom',
+                  component: () => import('@/views/FindAvailableRoom.vue')
               },
               {
                   path: '/uikit/formlayout',

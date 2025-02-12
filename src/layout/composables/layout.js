@@ -1,5 +1,6 @@
 import { computed, reactive } from 'vue'
 
+if (!localStorage.getItem('darkTheme')) localStorage.setItem('darkTheme', 'true')
 const layoutConfig = reactive({
   preset: 'Aura',
   primary: 'emerald',

@@ -1,4 +1,5 @@
 import { Timetable, x_serial, y_serial, type Days, type Periods, type WeeklySchedule } from "./Timetable";
+import { useFirestore } from 'vuefire'
 
 export class TimetableDB {
   timetables: { [key: string]: Timetable }
@@ -7,7 +8,7 @@ export class TimetableDB {
 
   constructor() {
     this.timetables = {}
-
+    const db = useFirestore()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     JSON.parse(localStorage.getItem("timetables") ?? "[]").forEach((data: any) => {
       const table = Timetable.fromJSON(data)

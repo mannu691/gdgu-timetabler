@@ -3,8 +3,9 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
 import App from '@/App.vue'
 import router from '@/router'
+import { VueFire } from 'vuefire'
 import { GlobalWorkerOptions } from 'pdfjs-dist'
-
+import { firebaseApp } from './firebase'
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 import { ToastService } from 'primevue'
@@ -21,6 +22,9 @@ app.use(PrimeVue, {
         darkModeSelector: '.app-dark'
     }
 }
+})
+app.use(VueFire, {
+  firebaseApp,
 })
 app.use(ToastService);
 app.mount('#app')

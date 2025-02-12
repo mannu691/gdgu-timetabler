@@ -29,7 +29,7 @@ const cell_offsets = {
   db: [-0.5, 1.5, 0, 0.5],
 }
 
-export type TableCell = { prof: string | undefined, course: string, room: string | undefined, group: string | undefined}
+export type TableCell = { prof: string | undefined, course: string, room: string | undefined, group: string | undefined }
 export type Days = (typeof y_serial)[number]
 export type Periods = (typeof x_serial)[number]
 export type WeeklySchedule<T> = Partial<{ [K in Days]: Partial<{ [P in Periods]: T }> }>;
@@ -110,7 +110,7 @@ export class Timetable {
             group: group,
           }
           cells[row][col] = cell
-          if(is_double && parseInt(col)<9){
+          if (is_double && parseInt(col) < 9) {
             cells[row][(parseInt(col) + 1).toString() as Periods] = cell
           }
           break
@@ -157,9 +157,12 @@ export class Timetable {
   static async fromPDF(pdf: PDFDocumentProxy): Promise<Timetable[]> {
     const list: Timetable[] = []
     for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const timetable = await Timetable.fromPDFPage(page)
-      if (timetable) list.push(timetable)
+      try {
+        const page = await pdf.getPage(i)
+        const timetable = await Timetable.fromPDFPage(page)
+        if (timetable) list.push(timetable)
+      } catch (_) {
+      }
     }
     return list
   }

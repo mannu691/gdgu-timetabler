@@ -87,7 +87,7 @@ export class TimetableDB {
   }
   save() {
     localStorage.setItem("timetables",JSON.stringify(Object.values(this.timetables)))
-    localStorage.setItem("professorTimetables", JSON.stringify(Object.values(this.professorTimetables)))
+    localStorage.setItem("professorTimetables", JSON.stringify(this.professorTimetables))
     localStorage.setItem("availableRooms", JSON.stringify(this.availableRooms))
   }
 }

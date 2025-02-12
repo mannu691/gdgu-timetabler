@@ -5,6 +5,20 @@ import type { TextItem } from "pdfjs-dist/types/src/display/api"
 const master_serial = { key: "Short", val: "Name" }
 export const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
 export const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
+export const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+export const timetableStart = new Date(0, 0, 0, 9, 10);
+export const periodTime = 50
+export const time_slots = [
+  "09:10 - 10:00",
+  "10:00 - 10:50",
+  "10:50 - 11:40",
+  "11:40 - 12:30",
+  "12:30 - 13:20",
+  "13:20 - 14:10",
+  "14:10 - 15:00",
+  "15:00 - 15:50",
+  "15:50 - 16:30"
+] as const;
 const cell_size = { w: 76, h: 46 }
 const cell_offsets = {
   sc: [-0.5, 0.5, -0.5, 0.5],
@@ -15,7 +29,7 @@ const cell_offsets = {
   db: [-0.5, 1.5, 0, 0.5],
 }
 
-export type TableCell = { prof: string | undefined, course: string, room: string | undefined, group: string | undefined, is_double: boolean }
+export type TableCell = { prof: string | undefined, course: string, room: string | undefined, group: string | undefined}
 export type Days = (typeof y_serial)[number]
 export type Periods = (typeof x_serial)[number]
 export type WeeklySchedule<T> = Partial<{ [K in Days]: Partial<{ [P in Periods]: T }> }>;
@@ -29,9 +43,9 @@ export class Timetable {
   schedule: WeeklySchedule<TableCell>
   courses: { [key: string]: string }
   professors: { [key: string]: string }
-  constructor(batch: string, data: WeeklySchedule<TableCell>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
+  constructor(batch: string, schedule: WeeklySchedule<TableCell>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
     this.batch = batch
-    this.schedule = data
+    this.schedule = schedule
     this.professors = professors
     this.courses = courses
   }
@@ -94,9 +108,11 @@ export class Timetable {
             room: room,
             course: course.str,
             group: group,
-            is_double: is_double
           }
           cells[row][col] = cell
+          if(is_double && parseInt(col)<9){
+            cells[row][(parseInt(col) + 1).toString() as Periods] = cell
+          }
           break
         }
       }
@@ -150,7 +166,7 @@ export class Timetable {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static fromJSON(json: any): Timetable {
-    return new Timetable(json.batch, json.data, json.courses, json.professors)
+    return new Timetable(json.batch, json.schedule, json.courses, json.professors)
   }
 }
 

@@ -16,7 +16,7 @@ const onPdfFileLoad = async (e) => {
 const onTimetableInput = async (event) => {
   reader.readAsArrayBuffer(event.target.files[0])
 }
-reader.onload = onPdfFileLoad
+
 const test = async () => {
   const task = getDocument('http://localhost:5173/test.pdf')
   const res = await task.promise

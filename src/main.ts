@@ -7,6 +7,7 @@ import { GlobalWorkerOptions } from 'pdfjs-dist'
 
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
+import { ToastService } from 'primevue'
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs'
 
@@ -21,4 +22,5 @@ app.use(PrimeVue, {
     }
 }
 })
+app.use(ToastService);
 app.mount('#app')

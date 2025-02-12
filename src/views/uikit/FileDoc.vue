@@ -15,6 +15,7 @@ function onUpload() {
 </script>
 
 <template>
+      <Toast />
     <div class="grid grid-cols-12 gap-8">
         <div class="col-span-full lg:col-span-6">
             <div class="card">

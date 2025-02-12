@@ -11,7 +11,7 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                <span class="text-lg sm:text-xl">GDGU Timetabler</span>
+                <span class="text-lg sm:text-xl">GDGU Timetable</span>
             </router-link>
         </div>
 

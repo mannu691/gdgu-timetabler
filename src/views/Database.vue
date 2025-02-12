@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { periodTime, time_slots, Timetable, timetableStart, weekDays, x_serial, y_serial } from '@/js/timetable';
-import { TimetableDB } from '@/js/timetable_db';
+import { periodTime, time_slots, Timetable, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
+import { TimetableDB } from '@/service/TimetableDB';
 import { getDocument } from 'pdfjs-dist';
 import type { FileUploadUploaderEvent } from 'primevue';
 import { useToast } from 'primevue/usetoast';

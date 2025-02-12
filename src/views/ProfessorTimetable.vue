@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial } from '@/js/timetable';
-import { TimetableDB } from '@/js/timetable_db';
+import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
+import { TimetableDB } from '@/service/TimetableDB';
 import Fuse from 'fuse.js';
 import type { AutoCompleteCompleteEvent } from 'primevue';
 import { ref, watch } from 'vue';

@@ -1,4 +1,4 @@
-import { Timetable, x_serial, y_serial, type Days, type Periods, type WeeklySchedule } from "./timetable";
+import { Timetable, x_serial, y_serial, type Days, type Periods, type WeeklySchedule } from "./Timetable";
 
 export class TimetableDB {
   timetables: { [key: string]: Timetable }

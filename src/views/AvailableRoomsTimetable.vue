@@ -1,16 +1,16 @@
 <script setup lang="ts">
+import { timetableDB } from '@/main';
 import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
-import { TimetableDB } from '@/service/TimetableDB';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
-const db = new TimetableDB()
-const weekDayOpts = ref(weekDays.map((v, i) => { return { name: v, code: y_serial[i] } }));
+const weekDayOpts = weekDays.map((v, i) => { return { name: v, code: y_serial[i] } });
 const currentDay = new Date().getDay()
-const weekDay = ref(weekDayOpts.value[currentDay == 0 ? 0 : currentDay - 1]);
+const weekDay = ref(weekDayOpts[currentDay == 0 ? 0 : currentDay - 1]);
 const timeline = ref<{ rooms: string[], period: number, time_slot: string }[]>([]);
 const currentPeriod = ref("0");
 const updateTimeline = () => {
-  const day = db.availableRooms[weekDay.value.code] ?? []
+
+  const day = timetableDB.availableRooms[weekDay.value.code] ?? []
   const freeRooms = []
   for (const period of x_serial) {
     const rooms = day[period] ?? []
@@ -34,7 +34,7 @@ const updateTimeline = () => {
 
 }
 watch(weekDay, updateTimeline);
-updateTimeline()
+onMounted(() => updateTimeline())
 </script>
 
 <template>
@@ -44,27 +44,29 @@ updateTimeline()
         <div class="card flex flex-col gap-4">
           <div class="font-semibold text-xl">Find Available Classroom</div>
           <div class="flex flex-col gap-2">
-            <SelectButton v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
+            <SelectButton class="flex-col sm:flex-row " v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
           </div>
           <Divider />
-          <div class="font-semibold text-xl mb-4">Available Rooms</div>
-          <div class="flex flex-col items-start">
-            <Timeline :value="timeline" class="w-min" align="left">
-              <template #opposite="slotProps">
-                <div class="flex space-x-2">
-                  <Badge :value="slotProps.item.period"
-                    :severity="currentPeriod == slotProps.item.period ? 'info' : ''"></Badge>
-                  <span class="text-muted-color whitespace-nowrap text-sm">{{
-                    slotProps.item.time_slot }}</span>
-                </div>
-              </template>
+          <div v-if="timeline.length != 0">
+            <div class="font-semibold text-xl mb-4">Available Rooms</div>
+            <div class="flex flex-col items-start">
+              <Timeline :value="timeline" class="w-min" align="left">
+                <template #opposite="slotProps">
+                  <div class="flex gap-2 sm:flex-row flex-col items-center">
+                    <Badge :value="slotProps.item.period"
+                      :severity="currentPeriod == slotProps.item.period ? 'info' : ''"></Badge>
+                    <span class="text-muted-color whitespace-nowrap text-sm">{{
+                      slotProps.item.time_slot }}</span>
+                  </div>
+                </template>
 
-              <template #content="slotProps">
-                <div class="flex gap-1 flex-wrap my-2 w-64">
-                  <Tag v-for="room in slotProps.item.rooms" :key="room" :value="room"></Tag>
-                </div>
-              </template>
-            </Timeline>
+                <template #content="slotProps">
+                  <div class="flex gap-1 flex-wrap my-2 sm:w-64 w-32">
+                    <Tag v-for="room in slotProps.item.rooms" :key="room" :value="room"></Tag>
+                  </div>
+                </template>
+              </Timeline>
+            </div>
           </div>
         </div>
       </div>

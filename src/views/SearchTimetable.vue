@@ -1,16 +1,15 @@
 <script setup lang="ts">
+import { timetableDB } from '@/main';
 import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial, type TableCell } from '@/service/Timetable';
-import { TimetableDB } from '@/service/TimetableDB';
 import Fuse from 'fuse.js';
 import type { AutoCompleteCompleteEvent } from 'primevue';
-import { ref, watch } from 'vue';
-const db = new TimetableDB()
+import { onMounted, ref, watch } from 'vue';
 const weekDayOpts = ref(weekDays.map((v, i) => { return { name: v, code: y_serial[i] } }));
 const currentDay = new Date().getDay()
 const weekDay = ref(weekDayOpts.value[currentDay == 0 ? 0 : currentDay - 1]);
 const timeline = ref<{ cell: TableCell | undefined, period: number, time_slot: string }[]>([]);
 const currentPeriod = ref("0");
-const allCourses = db.getBatchList()
+const allCourses = timetableDB.getBatchList()
 const filteredCourses = ref(allCourses);
 const fuse = new Fuse(allCourses)
 const course = ref(allCourses[0]);
@@ -21,8 +20,7 @@ const searchCourse = (e: AutoCompleteCompleteEvent) => {
 }
 
 const updateTimeline = () => {
-  const timetable = db.timetables[course.value].schedule
-  console.log(db.timetables[course.value])
+  const timetable = timetableDB.timetables[course.value].schedule
   if (timetable == undefined) {
     displayTimeline.value = false
     return
@@ -33,7 +31,7 @@ const updateTimeline = () => {
     const room = day[period]
     schedule.push({
       cell: room,
-      prof_name: db.timetables[course.value].professors[room?.prof ?? ""] ?? '',
+      prof_name: timetableDB.timetables[course.value].professors[room?.prof ?? ""] ?? '',
       period: parseInt(period),
       time_slot: time_slots[parseInt(period) - 1]
     })
@@ -50,13 +48,11 @@ const updateTimeline = () => {
 }
 watch(course, updateTimeline);
 watch(weekDay, updateTimeline);
-updateTimeline()
+onMounted(() => updateTimeline())
 </script>
 
 <template>
   <Fluid>
-    <div class="flex flex-col md:flex-row gap-8">
-      <div class="md:w-full">
         <div class="card flex flex-col gap-4">
 
           <div class="font-semibold text-xl">Search Timetable</div>
@@ -68,23 +64,23 @@ updateTimeline()
           <Divider />
           <div v-if="displayTimeline">
             <div class="flex flex-col gap-2">
-              <SelectButton v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
+              <SelectButton  class="flex-col sm:flex-row" v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
             </div>
             <Divider />
             <div class="font-semibold text-lg mb-4">Timetable</div>
             <div class="flex flex-col items-start">
               <Timeline :value="timeline" class="w-fit" align="left">
                 <template #opposite="slotProps">
-                  <div class="flex space-x-2">
-                    <Badge :value="slotProps.item.period"
+                  <div class="flex gap-2 sm:flex-row flex-col items-center">
+                    <Badge class="w-fit" :value="slotProps.item.period"
                       :severity="currentPeriod == slotProps.item.period ? 'info' : ''"></Badge>
-                    <span class="text-muted-color whitespace-nowrap text-sm">{{
+                    <span class="text-muted-color whitespace-nowrap  text-sm">{{
                       slotProps.item.time_slot }}</span>
                   </div>
                 </template>
 
                 <template #content="slotProps">
-                  <div v-if="slotProps.item.cell" class="flex gap-1 whitespace-nowrap items-start w-64">
+                  <div v-if="slotProps.item.cell" class="flex flex-col sm:flex-row gap-1 whitespace-nowrap items-start w-64 my-2">
                     <Tag v-if="slotProps.item.cell.course" :value="slotProps.item.cell.course"></Tag>
                     <Tag v-if="slotProps.item.cell.room" :value="slotProps.item.cell.room"></Tag>
                     <Tag v-if="slotProps.item.prof_name" :value="slotProps.item.prof_name"></Tag>
@@ -98,7 +94,5 @@ updateTimeline()
 
           </div>
         </div>
-      </div>
-    </div>
   </Fluid>
 </template>

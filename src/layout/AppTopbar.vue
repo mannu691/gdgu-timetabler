@@ -11,7 +11,7 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
-                <span>GDGU Timetabler</span>
+                <span class="text-lg sm:text-xl">GDGU Timetabler</span>
             </router-link>
         </div>
 
@@ -22,12 +22,7 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                 </button>
             </div>
 
-            <button
-                class="layout-topbar-menu-button layout-topbar-action"
-                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
-            >
-                <i class="pi pi-ellipsis-v"></i>
-            </button>
+
         </div>
     </div>
 </template>

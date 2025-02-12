@@ -9,7 +9,7 @@ const model = ref([
       { label: 'Find Available Room', icon: 'pi pi-fw pi-bolt', to: '/' },
       { label: 'Where is Professor?', icon: 'pi pi-fw pi-compass', to: '/professor-timetable' },
       { label: 'Search Timetable', icon: 'pi pi-fw pi-search', to: '/search-timetable' },
-      { label: 'Database', icon: 'pi pi-fw pi-database', to: '/database' },
+      // { label: 'Database', icon: 'pi pi-fw pi-database', to: '/database' },
     ]
   }
 ]);

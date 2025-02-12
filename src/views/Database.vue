@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { timetableDB } from '@/main';
 import { periodTime, time_slots, Timetable, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
 import { TimetableDB } from '@/service/TimetableDB';
 import { getDocument } from 'pdfjs-dist';
 import type { FileUploadUploaderEvent } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { ref, watch } from 'vue';
-const db = new TimetableDB()
 const reader = new FileReader()
 
 const toast = useToast();
@@ -14,8 +14,8 @@ const deleteTimetableDialog = ref(false);
 function upload() {
   fileupload.value.upload();
 }
-const deleteTimetables = () => {
-  db.delete()
+const deleteTimetables = async () => {
+  await timetableDB.delete()
   deleteTimetableDialog.value = false
   toast.add({ severity: 'success', summary: 'Success', detail: 'Deleted All Timetables', life: 3000 });
 }
@@ -28,11 +28,12 @@ const onTimetableLoad = async (e: ProgressEvent<FileReader>) => {
     const task = getDocument(e.target!.result as ArrayBuffer)
     const res = await task.promise
     const timetables = await Timetable.fromPDF(res)
-    db.addTimetables(timetables)
-    db.rebuildData()
-    db.save()
+    timetableDB.addTimetables(timetables)
+    timetableDB.rebuildData()
+    await timetableDB.save()
     toast.add({ severity: 'success', summary: 'Success', detail: 'Timetable Uploaded', life: 3000 });
   } catch (error) {
+    console.error(error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Timetable Could\'nt be added!', life: 3000 });
   }
 }
@@ -42,6 +43,7 @@ function onUpload(e: FileUploadUploaderEvent) {
     const file = e.files instanceof File ? e.files : e.files[0]
     reader.readAsArrayBuffer(file)
   } catch (error) {
+    console.error(error)
     toast.add({ severity: 'error', summary: 'Error', detail: 'Timetable Could\'nt be uploaded!', life: 3000 });
   }
 }

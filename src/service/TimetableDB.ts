@@ -1,14 +1,34 @@
+import { firebaseApp } from "@/firebase";
 import { Timetable, x_serial, y_serial, type Days, type Periods, type WeeklySchedule } from "./Timetable";
 import { useFirestore } from 'vuefire'
+import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
+export enum TimetableType {
+  Local,
+  Firestore
+}
+
+interface FirestoreTimetableData {
+  timetables: { [batch: string]: Timetable };
+  professorTimetables: { [key: string]: WeeklySchedule<string> };
+  availableRooms: WeeklySchedule<string[]>;
+}
 
 export class TimetableDB {
-  timetables: { [key: string]: Timetable }
-  professorTimetables: { [key: string]: WeeklySchedule<string> }
-  availableRooms: WeeklySchedule<string[]>
+  timetables: { [key: string]: Timetable } = {}
+  professorTimetables: { [key: string]: WeeklySchedule<string> } = {}
+  availableRooms: WeeklySchedule<string[]> = {}
+  type: TimetableType
+  constructor(type: TimetableType) {
+    this.type = type
+  }
+  async load() {
+    if (this.type === TimetableType.Firestore)
+      await this.loadFirestore()
+    else this.loadLocal()
+  }
 
-  constructor() {
+  private loadLocal() {
     this.timetables = {}
-    const db = useFirestore()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     JSON.parse(localStorage.getItem("timetables") ?? "[]").forEach((data: any) => {
       const table = Timetable.fromJSON(data)
@@ -16,6 +36,17 @@ export class TimetableDB {
     })
     this.professorTimetables = JSON.parse(localStorage.getItem("professorTimetables") ?? "{}") as { [key: string]: WeeklySchedule<string> }
     this.availableRooms = JSON.parse(localStorage.getItem("availableRooms") ?? "{}") as WeeklySchedule<string[]>
+  }
+
+  private async loadFirestore() {
+    const db = getFirestore();
+    const schedulesDocRef = doc(db, "schedules", "timetables");
+    const docSnap = await getDoc(schedulesDocRef);
+    if (!docSnap.exists()) return
+    const data = docSnap.data() as FirestoreTimetableData
+    this.timetables = data.timetables
+    this.professorTimetables = data.professorTimetables
+    this.availableRooms = data.availableRooms
   }
 
   getTimetable(batch: string) {
@@ -80,15 +111,28 @@ export class TimetableDB {
   }
 
 
-  delete() {
+  async delete() {
     this.timetables = {}
     this.professorTimetables = {}
     this.availableRooms = {}
-    this.save()
+    await this.save()
   }
-  save() {
-    localStorage.setItem("timetables",JSON.stringify(Object.values(this.timetables)))
-    localStorage.setItem("professorTimetables", JSON.stringify(this.professorTimetables))
-    localStorage.setItem("availableRooms", JSON.stringify(this.availableRooms))
+  async save() {
+    if (this.type === TimetableType.Local) {
+      localStorage.setItem("timetables", JSON.stringify(Object.values(this.timetables)))
+      localStorage.setItem("professorTimetables", JSON.stringify(this.professorTimetables))
+      localStorage.setItem("availableRooms", JSON.stringify(this.availableRooms))
+    }
+    else {
+      const db = getFirestore();
+      const schedulesDocRef = doc(db, "schedules", "timetables");
+
+      const data = {
+        timetables: Object.fromEntries(
+          Object.entries(this.timetables).map(([batch, table]) => [batch, JSON.parse(JSON.stringify(table))])
+        ), professorTimetables: this.professorTimetables, availableRooms: this.availableRooms
+      }
+      await setDoc(schedulesDocRef, data);
+    }
   }
 }

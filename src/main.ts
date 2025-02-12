@@ -9,8 +9,10 @@ import { firebaseApp } from './firebase'
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 import { ToastService } from 'primevue'
-
+import { TimetableDB, TimetableType } from './service/TimetableDB'
 GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs'
+
+export const timetableDB = new TimetableDB(TimetableType.Firestore)
 
 const app = createApp(App)
 
@@ -28,3 +30,4 @@ app.use(VueFire, {
 })
 app.use(ToastService);
 app.mount('#app')
+

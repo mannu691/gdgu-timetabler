@@ -1,16 +1,15 @@
 <script setup lang="ts">
+import { timetableDB } from '@/main';
 import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
-import { TimetableDB } from '@/service/TimetableDB';
 import Fuse from 'fuse.js';
 import type { AutoCompleteCompleteEvent } from 'primevue';
-import { ref, watch } from 'vue';
-const db = new TimetableDB()
+import { onMounted, ref, watch } from 'vue';
 const weekDayOpts = ref(weekDays.map((v, i) => { return { name: v, code: y_serial[i] } }));
 const currentDay = new Date().getDay()
 const weekDay = ref(weekDayOpts.value[currentDay == 0 ? 0 : currentDay - 1]);
 const timeline = ref<{ room: string | undefined, period: number, time_slot: string }[]>([]);
 const currentPeriod = ref("0");
-const allProfessors = db.getProfessorList()
+const allProfessors = timetableDB.getProfessorList()
 const filteredProfessors = ref(allProfessors);
 const fuse = new Fuse(allProfessors,)
 const professor = ref(allProfessors[0]);
@@ -21,7 +20,7 @@ const searchProfessor = (e: AutoCompleteCompleteEvent) => {
 }
 
 const updateTimeline = () => {
-  const timetable = db.professorTimetables[professor.value]
+  const timetable = timetableDB.professorTimetables[professor.value]
   if (timetable == undefined) {
     displayTimeline.value = false
     return
@@ -48,13 +47,12 @@ const updateTimeline = () => {
 }
 watch(professor, updateTimeline);
 watch(weekDay, updateTimeline);
-updateTimeline()
+onMounted(() => updateTimeline())
 </script>
 
 <template>
   <Fluid>
-    <div class="flex flex-col md:flex-row gap-8">
-      <div class="md:w-full">
+      <div class="w-full">
         <div class="card flex flex-col gap-4">
 
           <div class="font-semibold text-xl">Professor Timetable</div>
@@ -66,14 +64,14 @@ updateTimeline()
           <Divider />
           <div v-if="displayTimeline">
             <div class="flex flex-col gap-2">
-              <SelectButton v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
+              <SelectButton  class="flex-col sm:flex-row" v-model="weekDay" :options="weekDayOpts" optionLabel="name" />
             </div>
             <Divider />
             <div class="font-semibold text-lg mb-4">Timetable</div>
             <div class="flex flex-col items-start">
               <Timeline :value="timeline" class="w-min" align="left">
                 <template #opposite="slotProps">
-                  <div class="flex space-x-2">
+                  <div class="flex gap-2 sm:flex-row flex-col items-center">
                     <Badge :value="slotProps.item.period"
                       :severity="currentPeriod == slotProps.item.period ? 'info' : ''"></Badge>
                     <span class="text-muted-color whitespace-nowrap text-sm">{{
@@ -89,6 +87,5 @@ updateTimeline()
           </div>
         </div>
       </div>
-    </div>
   </Fluid>
 </template>

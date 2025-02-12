@@ -16,8 +16,6 @@
     "chart.js": "^4.4.7",
     "firebase": "^11.3.1",
     "fuse.js": "^7.1.0",
-    "pdf-parse": "^1.1.1",
-    "pdf.js-extract": "^0.2.1",
     "pdfjs-dist": "^4.10.38",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.5",

@@ -29,12 +29,12 @@ export function useLayout() {
       executeDarkModeToggle()
       return
     }
-    document.startViewTransition(() => executeDarkModeToggle(event))
+    document.startViewTransition(() => executeDarkModeToggle())
   }
 
   const executeDarkModeToggle = () => {
     layoutConfig.darkTheme = !layoutConfig.darkTheme
-    localStorage.setItem('darkTheme', layoutConfig.darkTheme)
+    localStorage.setItem('darkTheme', layoutConfig.darkTheme.toString())
     document.documentElement.classList.toggle('app-dark')
   }
 

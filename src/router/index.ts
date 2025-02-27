@@ -7,6 +7,7 @@ const router = createRouter({
     {
       path: '/',
       component: AppLayout,
+      strict: false,
       children: [
         {
           path: '/',

@@ -9,13 +9,13 @@ export enum TimetableType {
 
 interface FirestoreTimetableData {
   timetables: { [batch: string]: Timetable };
-  professorTimetables: { [key: string]: WeeklySchedule<string> };
+  professorTimetables: { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> };
   availableRooms: WeeklySchedule<string[]>;
 }
 
 export class TimetableDB {
   timetables: { [key: string]: Timetable } = {}
-  professorTimetables: { [key: string]: WeeklySchedule<string> } = {}
+  professorTimetables: { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> } = {}
   availableRooms: WeeklySchedule<string[]> = {}
   type: TimetableType
   constructor(type: TimetableType) {
@@ -34,7 +34,7 @@ export class TimetableDB {
       const table = Timetable.fromJSON(data)
       this.timetables[table.batch] = table
     })
-    this.professorTimetables = JSON.parse(localStorage.getItem("professorTimetables") ?? "{}") as { [key: string]: WeeklySchedule<string> }
+    this.professorTimetables = JSON.parse(localStorage.getItem("professorTimetables") ?? "{}") as { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> }
     this.availableRooms = JSON.parse(localStorage.getItem("availableRooms") ?? "{}") as WeeklySchedule<string[]>
   }
 
@@ -75,25 +75,27 @@ export class TimetableDB {
     const allRooms = new Set<string>()
     const busyRooms: WeeklySchedule<string[]> = {}
     const freeRooms: WeeklySchedule<string[]> = {}
-    const profSchedule: { [key: string]: WeeklySchedule<string> } = {}
+    const profSchedule: { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> } = {}
     for (const timetable of Object.values(this.timetables)) {
       for (const [day, periods] of Object.entries(timetable.schedule)) {
-        for (const [period, cell] of Object.entries(periods)) {
-          if (!cell.room) continue
-          const y = day as Days
-          const x = period as Periods
-          busyRooms[y] = busyRooms[y] ?? {}
-          busyRooms[y][x] = busyRooms[y][x] ?? []
-          //shouldn't really hardcode a filter like this but fk it we ball
-          if (cell.room.startsWith("B")) {
-            busyRooms[y][x].push(cell.room)
-            allRooms.add(cell.room)
+        for (const [period, cells] of Object.entries(periods)) {
+          for (const cell of cells) {
+            if (!cell.room) continue
+            const y = day as Days
+            const x = period as Periods
+            busyRooms[y] = busyRooms[y] ?? {}
+            busyRooms[y][x] = busyRooms[y][x] ?? []
+            //shouldn't really hardcode a filter like this but fk it we ball
+            if (cell.room.startsWith("B")) {
+              busyRooms[y][x].push(cell.room)
+              allRooms.add(cell.room)
+            }
+            if (!cell.prof || !timetable.professors[cell.prof]) continue
+            const name = timetable.professors[cell.prof];
+            profSchedule[name] = profSchedule[name] ?? {}
+            profSchedule[name][y] = profSchedule[name][y] ?? {}
+            profSchedule[name][y][x] = { room: cell.room, course: cell.course, batch: timetable.batch }
           }
-          if (!cell.prof || !timetable.professors[cell.prof]) continue
-          const name = timetable.professors[cell.prof];
-          profSchedule[name] = profSchedule[name] ?? {}
-          profSchedule[name][y] = profSchedule[name][y] ?? {}
-          profSchedule[name][y][x] = cell.room
         }
       }
     }

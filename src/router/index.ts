@@ -11,18 +11,23 @@ const router = createRouter({
       children: [
         {
           path: '/',
-          name: 'availablerooms-timetable',
+          name: 'home',
+          component: () => import('@/views/Home.vue')
+        },
+        {
+          path: '/available-rooms',
+          name: 'available-rooms-timetable',
           component: () => import('@/views/AvailableRoomsTimetable.vue')
         },
         {
-          path: '/professor-timetable',
+          path: '/professor',
           name: 'professor-timetable',
           component: () => import('@/views/ProfessorTimetable.vue')
         },
         {
-          path: '/search-timetable',
-          name: 'search-timetable',
-          component: () => import('@/views/SearchTimetable.vue')
+          path: '/courses',
+          name: 'courses-timetable',
+          component: () => import('@/views/CourseTimetable.vue')
         },
         {
           path: '/database',

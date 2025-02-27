@@ -2,12 +2,15 @@
 import { timetableDB } from '@/main';
 import { periodTime, time_slots, timetableStart, weekDays, x_serial, y_serial } from '@/service/Timetable';
 import { onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
+const route = useRoute();
+const router = useRouter();
 const weekDayOpts = weekDays.map((v, i) => { return { name: v, code: y_serial[i] } });
 const currentDay = new Date().getDay()
-const weekDay = ref(weekDayOpts[currentDay == 0 ? 0 : currentDay - 1]);
 const timeline = ref<{ rooms: string[], period: number, time_slot: string }[]>([]);
 const currentPeriod = ref("0");
+const weekDay = ref(weekDayOpts[route.query.day ?? currentDay == 0 ? 0 : currentDay - 1]);
 const updateTimeline = () => {
 
   const day = timetableDB.availableRooms[weekDay.value.code] ?? []
@@ -33,7 +36,11 @@ const updateTimeline = () => {
   }
 
 }
-watch(weekDay, updateTimeline);
+watch(weekDay, (newState) => {
+  if(!newState)return;
+  router.replace({ query: { ...route.query, day: y_serial.indexOf(newState.code) } });
+  updateTimeline()
+});
 onMounted(() => updateTimeline())
 </script>
 

@@ -3,6 +3,6 @@
 <template>
   <div class="layout-footer">
     Made by
-    Vaibhav Garg
+    Vaibhav Garg ✨
   </div>
 </template>

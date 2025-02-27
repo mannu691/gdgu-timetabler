@@ -6,9 +6,10 @@ import AppMenuItem from './AppMenuItem.vue';
 const model = ref([
   {
     items: [
-      { label: 'Find Available Room', icon: 'pi pi-fw pi-bolt', to: '/' },
-      { label: 'Where is Professor?', icon: 'pi pi-fw pi-compass', to: '/professor-timetable' },
-      { label: 'Search Timetable', icon: 'pi pi-fw pi-search', to: '/search-timetable' },
+      { label: 'Home', icon: 'pi pi-fw pi-home', to: '/' },
+      { label: 'Find Available Room', icon: 'pi pi-fw pi-bolt', to: '/available-rooms' },
+      { label: 'Where is Professor?', icon: 'pi pi-fw pi-compass', to: '/professor' },
+      { label: 'Search Timetable', icon: 'pi pi-fw pi-search', to: '/courses' },
       // { label: 'Database', icon: 'pi pi-fw pi-database', to: '/database' },
     ]
   }

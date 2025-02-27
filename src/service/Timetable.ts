@@ -40,10 +40,10 @@ function itemXY(it: TextItem): [number, number] {
 
 export class Timetable {
   batch: string
-  schedule: WeeklySchedule<TableCell>
+  schedule: WeeklySchedule<TableCell[]>
   courses: { [key: string]: string }
   professors: { [key: string]: string }
-  constructor(batch: string, schedule: WeeklySchedule<TableCell>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
+  constructor(batch: string, schedule: WeeklySchedule<TableCell[]>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
     this.batch = batch
     this.schedule = schedule
     this.professors = professors
@@ -62,11 +62,11 @@ export class Timetable {
     }
 
     // extract the actual schedule table
-    const cells: WeeklySchedule<TableCell> = {}
+    const cells: WeeklySchedule<TableCell[]> = {}
     for (const row of y_serial) {
       cells[row] = {}
       for (const col of x_serial) {
-        if (cells[row][col] != undefined) continue
+        if ((cells[row][col]?.length ?? 0) != 0) continue
         const x = anchor_map[col][0],
           y = anchor_map[row][1]
         let is_double = false
@@ -109,11 +109,13 @@ export class Timetable {
             course: course.str,
             group: group,
           }
-          cells[row][col] = cell
+          cells[row][col] = cells[row][col] || []
+          cells[row][col].push(cell)
           if (is_double && parseInt(col) < 9) {
-            cells[row][(parseInt(col) + 1).toString() as Periods] = cell
+            let nextSlot = (parseInt(col) + 1).toString() as Periods
+            cells[row][nextSlot] = cells[row][nextSlot] || []
+            cells[row][nextSlot].push(cell)
           }
-          break
         }
       }
     }

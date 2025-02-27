@@ -11,6 +11,7 @@ interface FirestoreTimetableData {
   timetables: { [batch: string]: Timetable };
   professorTimetables: { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> };
   availableRooms: WeeklySchedule<string[]>;
+  lastUpdated: string;
 }
 
 export class TimetableDB {
@@ -18,6 +19,7 @@ export class TimetableDB {
   professorTimetables: { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> } = {}
   availableRooms: WeeklySchedule<string[]> = {}
   type: TimetableType
+  lastUpdated: string = ""
   constructor(type: TimetableType) {
     this.type = type
   }
@@ -36,6 +38,7 @@ export class TimetableDB {
     })
     this.professorTimetables = JSON.parse(localStorage.getItem("professorTimetables") ?? "{}") as { [key: string]: WeeklySchedule<{ room: string, course: string, batch: string }> }
     this.availableRooms = JSON.parse(localStorage.getItem("availableRooms") ?? "{}") as WeeklySchedule<string[]>
+    this.lastUpdated = localStorage.getItem("lastUpdated") ?? ""
   }
 
   private async loadFirestore() {
@@ -47,6 +50,7 @@ export class TimetableDB {
     this.timetables = data.timetables
     this.professorTimetables = data.professorTimetables
     this.availableRooms = data.availableRooms
+    this.lastUpdated = data.lastUpdated
   }
 
   getTimetable(batch: string) {
@@ -120,10 +124,14 @@ export class TimetableDB {
     await this.save()
   }
   async save() {
+    const date = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD
+    const [year, month, day] = date.split('-');
+    this.lastUpdated= `${day}-${month}-${year}`
     if (this.type === TimetableType.Local) {
       localStorage.setItem("timetables", JSON.stringify(Object.values(this.timetables)))
       localStorage.setItem("professorTimetables", JSON.stringify(this.professorTimetables))
       localStorage.setItem("availableRooms", JSON.stringify(this.availableRooms))
+      localStorage.setItem("lastUpdated", this.lastUpdated)
     }
     else {
       const db = getFirestore();
@@ -132,7 +140,8 @@ export class TimetableDB {
       const data = {
         timetables: Object.fromEntries(
           Object.entries(this.timetables).map(([batch, table]) => [batch, JSON.parse(JSON.stringify(table))])
-        ), professorTimetables: this.professorTimetables, availableRooms: this.availableRooms
+        ), professorTimetables: this.professorTimetables, availableRooms: this.availableRooms,
+        lastUpdated: this.lastUpdated
       }
       await setDoc(schedulesDocRef, data);
     }

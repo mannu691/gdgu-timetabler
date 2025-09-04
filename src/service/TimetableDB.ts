@@ -94,8 +94,8 @@ export class TimetableDB {
               busyRooms[y][x].push(cell.room)
               allRooms.add(cell.room)
             }
-            if (!cell.prof || !timetable.professors[cell.prof]) continue
-            const name = timetable.professors[cell.prof];
+            if (!cell.prof) continue
+            const name = cell.prof;
             profSchedule[name] = profSchedule[name] ?? {}
             profSchedule[name][y] = profSchedule[name][y] ?? {}
             profSchedule[name][y][x] = { room: cell.room, course: cell.course, batch: timetable.batch }

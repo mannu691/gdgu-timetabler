@@ -3,9 +3,9 @@ import type { TextItem } from "pdfjs-dist/types/src/display/api"
 
 //Predefined constants for timetable extraction
 const master_serial = { key: "Short", val: "Name" }
-export const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const
+export const y_serial = ['Mo', 'Tu', 'We', 'Th', 'Fr'] as const
 export const x_serial = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const
-export const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+export const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
 export const timetableStart = new Date(0, 0, 0, 9, 10);
 export const periodTime = 50
 export const time_slots = [
@@ -41,13 +41,9 @@ function itemXY(it: TextItem): [number, number] {
 export class Timetable {
   batch: string
   schedule: WeeklySchedule<TableCell[]>
-  courses: { [key: string]: string }
-  professors: { [key: string]: string }
-  constructor(batch: string, schedule: WeeklySchedule<TableCell[]>, courses: { [key: string]: string }, professors: { [key: string]: string }) {
+  constructor(batch: string, schedule: WeeklySchedule<TableCell[]>) {
     this.batch = batch
     this.schedule = schedule
-    this.professors = professors
-    this.courses = courses
   }
   static async fromPDFPage(page: PDFPageProxy): Promise<Timetable | undefined> {
     const items = (await page.getTextContent()).items as TextItem[]
@@ -56,7 +52,7 @@ export class Timetable {
     const anchor_map: { [key: string]: [number, number] } = {}
 
     // map all positions of serial anchors
-    for (const i of [...x_serial, ...y_serial]) {
+        for (const i of [...x_serial, ...y_serial]) {
       const it = items.find((val) => val.str.trim() == i)!
       anchor_map[it.str] = itemXY(it)
     }
@@ -129,31 +125,7 @@ export class Timetable {
         .reduce((prev, cur) => (Math.abs(prev.transform[4] - x) + Math.abs(prev.transform[5] - y)) < Math.abs(cur.transform[4] - x) + Math.abs(cur.transform[5] - y) ? prev : cur)
       master_anchors.push([i, closestVal])
     }
-    //extract course and professor details
-    const masters = []
-    for (let i = 0; i < 2; i++) {
-      const anchor = master_anchors[i]
-      const sx = anchor[0].transform[4], sy = anchor[0].transform[5]
-      const nx = anchor[1].transform[4], ny = anchor[1].transform[5]
-      const keys = items.filter(v => v.str.trim() != "" && v.transform[5] < sy && Math.abs(v.transform[4] - sx) < 5)
-      const vals = items.filter(v => v.str.trim() != "" && v.transform[5] < ny && Math.abs(v.transform[4] - nx) < 5)
-
-      let valIndex = 0
-      masters[i] = Object.fromEntries(
-        keys.map((key) => {
-          let keyStr = key.str
-          let valStr = vals[valIndex].str
-          if (keyStr.includes(" ") && key.transform[5] != vals[valIndex].transform[5]) {
-            keyStr = keyStr.split(" ")[0]
-            valStr = keyStr.split(" ").slice(1).join(" ")
-          } else {
-            valIndex++
-          }
-          return [keyStr, valStr]
-        })
-      );
-    }
-    return new Timetable(items[0].str, cells, masters[0], masters[1])
+    return new Timetable(items[0].str, cells)
   }
 
   static async fromPDF(pdf: PDFDocumentProxy): Promise<Timetable[]> {
@@ -163,7 +135,9 @@ export class Timetable {
         const page = await pdf.getPage(i)
         const timetable = await Timetable.fromPDFPage(page)
         if (timetable) list.push(timetable)
-      } catch (_) {
+        console.log("page :"+i)
+      } catch (e) {
+        console.error(`Error processing page ${i}:`, e)
       }
     }
     return list
@@ -171,7 +145,7 @@ export class Timetable {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static fromJSON(json: any): Timetable {
-    return new Timetable(json.batch, json.schedule, json.courses, json.professors)
+    return new Timetable(json.batch, json.schedule)
   }
 }
 

@@ -12,7 +12,7 @@ import { ToastService } from 'primevue'
 import { TimetableDB, TimetableType } from './service/TimetableDB'
 GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs'
 
-export const timetableDB = new TimetableDB(TimetableType.Firestore)
+export const timetableDB = new TimetableDB(TimetableType.Local)
 
 const app = createApp(App)
 app.use(router)

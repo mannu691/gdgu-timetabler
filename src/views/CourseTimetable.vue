@@ -36,7 +36,7 @@ const updateTimeline = () => {
     for (const cell of cells) {
       schedule.push({
         cell: cell,
-        prof_name: timetableDB.timetables[course.value].professors[cell?.prof ?? ""] ?? '',
+        prof_name:cell?.prof ?? "",
         period: parseInt(period),
         time_slot: time_slots[parseInt(period) - 1]
       })
